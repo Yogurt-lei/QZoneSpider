@@ -47,3 +47,7 @@ LIST_ALBUM = "https://h5.qzone.qq.com/proxy/domain/alist.photo.qq.com/fcgi-bin/f
 
 # GET 图片列表
 LIST_PHOTO = "https://h5.qzone.qq.com/proxy/domain/plist.photo.qzone.qq.com/fcgi-bin/cgi_list_photo?g_tk={g_tk}&hostUin={u_id}&topicId={topicId}&uin={u_id}&pageStart={pageStart}&pageNum={pageNum}&inCharset=utf-8&outCharset=utf-8&outstyle=json&format=jsonp"
+
+REQUEST_HEADER = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36'
+}

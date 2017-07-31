@@ -22,5 +22,10 @@ if __name__ == '__main__':
     u_id = raw_input('Enter QQ u_id:').strip()
     pwd = raw_input('Enter QQ pwd :').strip()
 
-    QZoneSpider().login(u_id, pwd)
+    try:
+        QZoneSpider().login(u_id, pwd)
+    except Exception as e:
+        print e.message
+
+    print 'QZone Spider End.....'
     

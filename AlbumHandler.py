@@ -3,7 +3,7 @@
 import os
 import json
 import time
-import urllib
+import requests
 import Constants
 
 PAGE_NUM = 30
@@ -37,60 +37,68 @@ class AlbumHandler(object):
         # 遍历相册进行下载
         for album in x['data']['albumListModeSort']:
             topicId = album['id']
-            name = album['name'].encode('utf-8')
             total = album['total']
 
             # 创建相册保存路径
-            albumPath = uidImgPath + name
+            albumPath = uidImgPath + os.sep +topicId
             if not os.path.exists(albumPath):
                 os.mkdir(albumPath)
 
-            page = total / PAGE_NUM
+            page = total / PAGE_NUM + 1
             remainder = total % PAGE_NUM
             
-            print '-----------album %s start download----------------------'%(name)
+            print '-----------album %s start download----------------------'%(topicId)
             # 分页下载
-            pageStart = 0
-            currPage = 0
-            currPhoto = 0
+            pageStart = 1
+            currPage = 1
+            currPhoto = 1
             while currPage <= page:
-                pageStart = currPage * PAGE_NUM
+                pageStart = (currPage-1) * PAGE_NUM
                 isLast = True if page==currPage else False
                 pageNum = pageStart + (remainder if isLast else PAGE_NUM)
+                print '[%s/%s page], album %s is downloading...'%(currPage, page, topicId)
 
-                print '[%s/%s page], album %s is downloading...'%(currPage, page, name)
                 photo = self.session.get(Constants.LIST_PHOTO
-                                        .replace('{g_tk}', self.g_tk)
                                         .replace('{u_id}', u_id)
                                         .replace('{topicId}', topicId)
-                                        .replace('{pageStart}', pageStart)
-                                        .replace('{pageNum}', pageNum)).content
+                                        .replace('{g_tk}', str(self.g_tk))
+                                        .replace('{pageStart}', str(pageStart))
+                                        .replace('{pageNum}', str(pageNum))).content
 
-                time.sleep(0.1)
+                time.sleep(1)
                 photo = json.loads(photo[photo.find('(') + 1 : photo.find(')')])
                 for photo in photo['data']['photoList']:
                     pid = photo['modifytime']
                     purl = photo['url']
-                    urllib.urlretrieve(purl, albumPath+str(pid)+'.jpg')
+                    imgPath = albumPath + os.sep + str(pid) + '.jpg'
+
+                    print '[%s / %s] downloading: %s'%(currPhoto,total,purl) 
+                    self.imgDownload(purl, imgPath)
+                    
+                    time.sleep(0.1)
                     currPhoto += 1
-                    print '[%s / %s] photo downloading: %s'%(currPhoto,total,purl) 
 
-            print '-----------album %s end download----------------------'%(name)
+                currPage += 1
+            print '-----------album %s end download----------------------'%(topicId)
+    
+    def downLoadProcess(self, blocknum, blocksize, totalsize):
+        '''
+            下载进度 urllib.urlretrieve使用
+        '''
+        percent = 100.0 * blocknum * blocksize / totalsize
+        if percent > 100:
+            percent = 100
+        print "%.2f%%"% percent
 
-def main():
-    total = 227
-    page =  total/PAGE_NUM
-    remainder = total%PAGE_NUM
-
-    currPage = 0
-    while currPage <= page:
-        pageStart = currPage*PAGE_NUM
-        
-        isLast = True if page==currPage else False
-        pageNum = pageStart + (remainder if isLast else PAGE_NUM)
-
-        print str(currPage) + ': ' + str(pageStart) + '--> '+ str(pageNum)
-        currPage += 1
-
-if __name__ == '__main__':
-    main()
+    def imgDownload(self, url, imgPath):
+        '''
+            下载图片：异常重新下载
+        '''
+        try:
+            data = requests.get(url).content
+            with open(imgPath, 'wb') as f:
+                f.write(data)
+            # urllib.urlretrieve(url, imgPath, self.downLoadProcess)
+        except Exception:
+            print 'download %s failed.Reloading.'%(url)
+            self.imgDownload(url, imgPath)

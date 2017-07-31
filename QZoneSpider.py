@@ -12,8 +12,6 @@ from AlbumHandler import *
 SESSION = requests.session()
 VERIFY_CODE_IMG_PATH = os.path.split(os.path.realpath(__file__))[0] + os.sep + 'verifyCode.png'
 
-# User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; rv:11.0) like Gecko
-
 class QZoneSpider(object):
     """
         QZoneSpider
@@ -44,7 +42,6 @@ class QZoneSpider(object):
         """
         # 登录尝试 登录成功才会继续
         self.tryLoginProcess(u_id, pwd)
-        print SESSION.cookies
         g_tk = Algorithm.g_tk(SESSION.cookies['p_skey'])
 
         # 开始处理相册
@@ -63,13 +60,13 @@ class QZoneSpider(object):
         self.tryLoginTimes += 1
         print '==================================================='
         print 'NO. '+ str(self.tryLoginTimes) + ' tryLoginProcess!'
-        if (self.isNeedVerifyCode() == '0'):  # 不需要验证码
+        if (self.isNeedVerifyCode(u_id) == '0'):  # 不需要验证码
             print '-> No verifyCode is required'
             self.realLogin(u_id, pwd)
         else:  # 需要验证码
             print '-> VerifyCode is required'
             # 处理sess参数
-            self.handleSess()
+            self.handleSess(u_id)
             self.tryVerifyCodeProcess(u_id, pwd)
 
     def tryVerifyCodeProcess(self, u_id, pwd):
@@ -128,19 +125,20 @@ class QZoneSpider(object):
                         .replace('{encode_pwd}', encodePwd)
                         .replace('{app_id}', Constants.APP_ID)
                         .replace('{verifycode}', self.verifyCode)
-                        .replace('{pt_verifysession_v1}', self.pt_verifysession_v1)).content
+                        .replace('{pt_verifysession_v1}', self.pt_verifysession_v1),
+                        headers=Constants.REQUEST_HEADER).content
 
         print x
         # 截取登录成功返回的重定向地址
         x = x[x.find('(') + 1 : x.find(')')].replace('\'', '').split(',')
         if x[0] == '0':
             # 此处请求返回登录成功的url会自动重定向到loginsucc.html 会设置cookies[p_skey, p_uin, pt4_token]
-            SESSION.get(x[2])
+            SESSION.get(x[2], headers=Constants.REQUEST_HEADER)
         else:
             self.tryLoginProcess(u_id, pwd)
         
 
-    def isNeedVerifyCode(self):
+    def isNeedVerifyCode(self, u_id):
         """
             判断是否需要验证码：
 
@@ -156,7 +154,8 @@ class QZoneSpider(object):
         print 'STEP 1: Check if validation code is needed'
         x = SESSION.get(Constants.IS_NEED_VERIFY
                          .replace('{u_id}', u_id)
-                         .replace('{app_id}', Constants.APP_ID)).content
+                         .replace('{app_id}', Constants.APP_ID),
+                         headers=Constants.REQUEST_HEADER).content
         print x
 
         x = x[x.find('(') + 1: x.find(')')].replace('\'', '').split(',')
@@ -169,7 +168,7 @@ class QZoneSpider(object):
 
         return flag
 
-    def handleSess(self):
+    def handleSess(self, u_id):
         '''
             验证码预处理 sess
             >>>
@@ -189,7 +188,8 @@ class QZoneSpider(object):
         sess = SESSION.get(Constants.PREPARE_CAPTCHA_SESS
                             .replace('{u_id}', u_id)
                             .replace('{cap_cd}', self.cap_cd)
-                            .replace('{app_id}', Constants.APP_ID)).content
+                            .replace('{app_id}', Constants.APP_ID),
+                            headers=Constants.REQUEST_HEADER).content
         print sess
         self.sess = json.loads(sess.strip('()'))['sess']
 
@@ -212,7 +212,8 @@ class QZoneSpider(object):
                                 .replace('{u_id}', u_id)
                                 .replace('{sess}', self.sess)
                                 .replace('{cap_cd}', self.cap_cd)
-                                .replace('{app_id}', Constants.APP_ID)).json()
+                                .replace('{app_id}', Constants.APP_ID),
+                                headers=Constants.REQUEST_HEADER).json()
         print sigContent
         self.vsig = sigContent['vsig']
         randstr = sigContent['chlg']['randstr']
@@ -231,7 +232,8 @@ class QZoneSpider(object):
                         .replace('{sess}', self.sess)
                         .replace('{vsig}', self.vsig)
                         .replace('{cap_cd}', self.cap_cd)
-                        .replace('{app_id}', Constants.APP_ID)).content
+                        .replace('{app_id}', Constants.APP_ID), 
+                        headers=Constants.REQUEST_HEADER).content
         # 保存打开验证码图片
         im = Image.open(BytesIO(img))
         im.save(VERIFY_CODE_IMG_PATH)
@@ -265,7 +267,7 @@ class QZoneSpider(object):
             'ans': self.verifyCode
         }
 
-        resp = SESSION.post(Constants.CAPTAHA_VERIFY, data=verifyPostData).json()
+        resp = SESSION.post(Constants.CAPTAHA_VERIFY, data=verifyPostData, headers=Constants.REQUEST_HEADER).json()
         print resp
         errorCode = resp['errorCode']
         if errorCode == '0':
