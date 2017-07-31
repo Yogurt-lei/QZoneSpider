@@ -17,7 +17,7 @@ from QZoneSpider import *
  '''
 
 if __name__ == '__main__':
-    u_id = '617726687'
-    pwd = 'leizhenzi@'
+    u_id = raw_input('Enter QQ u_id:').strip()
+    pwd = raw_input('Enter QQ pwd :').strip()
 
     QZoneSpider().login(u_id, pwd)
