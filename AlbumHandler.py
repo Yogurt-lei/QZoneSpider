@@ -3,6 +3,7 @@
 import os
 import json
 import time
+import urllib
 import requests
 import Constants
 
@@ -31,16 +32,20 @@ class AlbumHandler(object):
             os.mkdir(uidImgPath)
 
         # 请求相册列表
-        x = self.session.get(Constants.LIST_ALBUM.replace('{g_tk}', str(self.g_tk)).replace('{u_id}', u_id)).content
+        x = self.session.get(Constants.LIST_ALBUM
+                            .replace('{g_tk}', str(self.g_tk))
+                            .replace('{u_id}', u_id), 
+                            headers=Constants.REQUEST_HEADER).content
         x = json.loads(x[x.find('(') + 1 : x.find(')')])
 
         # 遍历相册进行下载
         for album in x['data']['albumListModeSort']:
             topicId = album['id']
+            # name = album['name'] 中文乱码 先用id处理
             total = album['total']
 
             # 创建相册保存路径
-            albumPath = uidImgPath + os.sep +topicId
+            albumPath = uidImgPath + os.sep + topicId
             if not os.path.exists(albumPath):
                 os.mkdir(albumPath)
 
@@ -59,11 +64,12 @@ class AlbumHandler(object):
                 print '[%s/%s page], album %s is downloading...'%(currPage, page, topicId)
 
                 photo = self.session.get(Constants.LIST_PHOTO
+                                        .replace('{g_tk}', str(self.g_tk))
                                         .replace('{u_id}', u_id)
                                         .replace('{topicId}', topicId)
-                                        .replace('{g_tk}', str(self.g_tk))
                                         .replace('{pageStart}', str(pageStart))
-                                        .replace('{pageNum}', str(pageNum))).content
+                                        .replace('{pageNum}', str(pageNum)), 
+                                        headers=Constants.REQUEST_HEADER).content
 
                 time.sleep(1)
                 photo = json.loads(photo[photo.find('(') + 1 : photo.find(')')])

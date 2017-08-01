@@ -42,6 +42,7 @@ class QZoneSpider(object):
         """
         # 登录尝试 登录成功才会继续
         self.tryLoginProcess(u_id, pwd)
+        # print SESSION.cookies
         g_tk = Algorithm.g_tk(SESSION.cookies['p_skey'])
 
         # 开始处理相册
@@ -154,7 +155,7 @@ class QZoneSpider(object):
         print 'STEP 1: Check if validation code is needed'
         x = SESSION.get(Constants.IS_NEED_VERIFY
                          .replace('{u_id}', u_id)
-                         .replace('{app_id}', Constants.APP_ID),
+                         .replace('{app_id}', Constants.APP_ID), 
                          headers=Constants.REQUEST_HEADER).content
         print x
 
@@ -188,7 +189,7 @@ class QZoneSpider(object):
         sess = SESSION.get(Constants.PREPARE_CAPTCHA_SESS
                             .replace('{u_id}', u_id)
                             .replace('{cap_cd}', self.cap_cd)
-                            .replace('{app_id}', Constants.APP_ID),
+                            .replace('{app_id}', Constants.APP_ID), 
                             headers=Constants.REQUEST_HEADER).content
         print sess
         self.sess = json.loads(sess.strip('()'))['sess']
@@ -212,7 +213,7 @@ class QZoneSpider(object):
                                 .replace('{u_id}', u_id)
                                 .replace('{sess}', self.sess)
                                 .replace('{cap_cd}', self.cap_cd)
-                                .replace('{app_id}', Constants.APP_ID),
+                                .replace('{app_id}', Constants.APP_ID), 
                                 headers=Constants.REQUEST_HEADER).json()
         print sigContent
         self.vsig = sigContent['vsig']

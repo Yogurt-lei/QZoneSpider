@@ -1,7 +1,3 @@
-qrLogin.py
-Algorithm.pyc
-Constants.pyc
+.vscode/*
 js_debug.html
-.vscode/launch.json
-.vscode/.ropeproject/config.py
-.vscode/.ropeproject/objectdb
+*.pyc
