@@ -80,8 +80,7 @@ class AlbumHandler(object):
 
                     if not os.path.exists(imgPath):
                         print '[%s/%s page]: [%s / %s] downloading: %s'%(currPage, page, currPhoto, total, purl) 
-                        self.imgDownload(purl, imgPath, 0)
-                        time.sleep(1)
+                        self.imgDownload(purl, imgPath, 1)
                     else:
                         print 'photo %s exists, continue.' %(pid)
                     currPhoto += 1
@@ -104,16 +103,20 @@ class AlbumHandler(object):
             下载图片：异常重新下载
         '''
         try:
-            data = urllib.urlopen(url).read()
-            f = open(imgPath, 'wb')
-            f.write(data)
-            f.close()
+            time.sleep(1)
+            req = requests.get(url, headers=Constants.REQUEST_HEADER)
             
-            #urllib.urlretrieve(url, imgPath, self.downLoadProcess)
-        except Exception:
-            times += 1
-            if times == 5:
-                return
-            
-            print 'try %d times download %s failed.Redownloading..'%(times, url)
-            self.imgDownload(url, imgPath, times)
+            if req.status_code==200:
+                with open(imgPath, 'wb') as f:
+                    f.write(req.content)
+            else:
+                if times == 3:
+                    print 'redownloading failed, continue...'
+                    return
+                
+                times += 1
+                print 'try %d times, redownloading %s'%(times+1, url)
+                self.imgDownload(url, imgPath, times)
+        except Exception as e:
+            print e.message
+        
