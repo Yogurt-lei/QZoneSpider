@@ -1,3 +1,5 @@
 .vscode/*
 js_debug.html
 *.pyc
+build/
+dist/
