@@ -28,4 +28,6 @@ if __name__ == '__main__':
         print e.message
 
     print 'QZone Spider End.....'
+
+    raw_input('Press any key to quit....')
     

@@ -42,7 +42,7 @@ class AlbumHandler(object):
         for album in x['data']['albumListModeSort']:
             topicId = album['id']
             # name = album['name'] 中文乱码 先用id处理
-            total = album['total']
+            total = album['total'] # 该相册相片总数
 
             # 创建相册保存路径
             albumPath = uidImgPath + os.sep + topicId
@@ -61,8 +61,8 @@ class AlbumHandler(object):
                 pageStart = (currPage-1) * PAGE_NUM
                 isLast = True if page==currPage else False
                 pageNum = pageStart + (remainder if isLast else PAGE_NUM)
-                print '[%s/%s page], album %s is downloading...'%(currPage, page, topicId)
 
+                # 请求具体相册
                 photo = self.session.get(Constants.LIST_PHOTO
                                         .replace('{g_tk}', str(self.g_tk))
                                         .replace('{u_id}', u_id)
@@ -74,17 +74,20 @@ class AlbumHandler(object):
                 time.sleep(1)
                 photo = json.loads(photo[photo.find('(') + 1 : photo.find(')')])
                 for photo in photo['data']['photoList']:
-                    pid = photo['modifytime']
+                    pid = photo['lloc']
                     purl = photo['url']
                     imgPath = albumPath + os.sep + str(pid) + '.jpg'
 
-                    print '[%s / %s] downloading: %s'%(currPhoto,total,purl) 
-                    self.imgDownload(purl, imgPath)
-                    
-                    time.sleep(0.1)
+                    if not os.path.exists(imgPath):
+                        print '[%s/%s page]: [%s / %s] downloading: %s'%(currPage, page, currPhoto, total, purl) 
+                        self.imgDownload(purl, imgPath, 0)
+                        time.sleep(1)
+                    else:
+                        print 'photo %s exists, continue.' %(pid)
                     currPhoto += 1
 
                 currPage += 1
+
             print '-----------album %s end download----------------------'%(topicId)
     
     def downLoadProcess(self, blocknum, blocksize, totalsize):
@@ -96,15 +99,21 @@ class AlbumHandler(object):
             percent = 100
         print "%.2f%%"% percent
 
-    def imgDownload(self, url, imgPath):
+    def imgDownload(self, url, imgPath, times):
         '''
             下载图片：异常重新下载
         '''
         try:
-            data = requests.get(url).content
-            with open(imgPath, 'wb') as f:
-                f.write(data)
-            # urllib.urlretrieve(url, imgPath, self.downLoadProcess)
+            data = urllib.urlopen(url).read()
+            f = open(imgPath, 'wb')
+            f.write(data)
+            f.close()
+            
+            #urllib.urlretrieve(url, imgPath, self.downLoadProcess)
         except Exception:
-            print 'download %s failed.Reloading.'%(url)
-            self.imgDownload(url, imgPath)
+            times += 1
+            if times == 5:
+                return
+            
+            print 'try %d times download %s failed.Redownloading..'%(times, url)
+            self.imgDownload(url, imgPath, times)
