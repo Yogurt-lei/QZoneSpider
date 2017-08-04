@@ -3,7 +3,7 @@
 import os
 import json
 import time
-import urllib
+import requests
 import Constants
 
 PAGE_NUM = 30
@@ -79,7 +79,7 @@ class AlbumHandler(object):
 
                     if not os.path.exists(imgPath):
                         print '[%s/%s page]: [%s / %s] downloading: %s'%(currPage, page, currPhoto, total, purl) 
-                        self.imgDownload(purl, imgPath, 1)
+                        self.imgDownload(purl, imgPath, 0)
                     else:
                         print 'photo %s exists, continue.' %(pid)
                     currPhoto += 1
@@ -93,15 +93,18 @@ class AlbumHandler(object):
             下载图片：异常重新下载
         '''
         try:
-            data = urllib.urlopen(url).read()
-
-            with open(imgPath, 'wb') as f:
-                f.write(data)
-            
-        except Exception:
             times += 1
+            resp = requests.get(url, headers=Constants.REQUEST_HEADER)
+            if resp.status_code==200:
+                with open(imgPath, 'wb') as f:
+                    f.write(resp.content)
+            else:
+                print 'server Code %s, redownloading failed, giving up...'%(resp.status_code)
+                self.imgDownload(url, imgPath, times)
+            
+        except Exception as e:
             if times == 3:
-                print 'redownloading failed, continue...'
+                print '%s, redownloading failed, giving up...'%(e.message)
                 return
             
             print 'try %d times download %s failed.Redownloading..'%(times, url)

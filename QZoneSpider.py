@@ -5,10 +5,11 @@ import re
 import json
 import time
 import requests
-from Algorithm import *
+import Algorithm
 import Constants
 from PIL import Image
 from io import BytesIO
+from AlbumHandler import *
 
 SESSION = requests.session()
 VERIFY_CODE_IMG_PATH = os.path.split(os.path.realpath(__file__))[0] + os.sep + 'verifyCode.png'
@@ -64,7 +65,7 @@ class QZoneSpider(object):
                 SESSION.get(url, headers=Constants.REQUEST_HEADER)
                 g_tk = Algorithm.g_tk(SESSION.cookies['p_skey'])
 
-                AlbumHandler(SESSION, g_tk).start(SESSION.cookies['uin'].lstrip('o'))
+                # AlbumHandler(SESSION, g_tk).start(SESSION.cookies['uin'].lstrip('o'))
             elif code == '65':
                 print 'refresh QR-Code'
                 os.remove(QR_CODE_IMG_PATH)
@@ -323,5 +324,4 @@ class QZoneSpider(object):
         if errorCode == '0':
             self.verifyCode = resp['randstr']
             self.pt_verifysession_v1 = resp['ticket']
-        
         return errorCode
