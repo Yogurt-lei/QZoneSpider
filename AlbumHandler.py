@@ -19,7 +19,7 @@ class AlbumHandler(object):
         if not os.path.exists(self.IMG_DOWNLOAD_PATH):
             os.mkdir(self.IMG_DOWNLOAD_PATH)
 
-        self.session = session
+        self.session = session    
         self.g_tk = g_tk
 
     def start(self, u_id):
@@ -33,9 +33,9 @@ class AlbumHandler(object):
 
         # 请求相册列表
         x = self.session.get(Constants.LIST_ALBUM
-                            .replace('{g_tk}', str(self.g_tk))
-                            .replace('{u_id}', u_id), 
-                            headers=Constants.REQUEST_HEADER).content
+                        .replace('{g_tk}', str(self.g_tk))
+                        .replace('{u_id}', u_id), 
+                        headers=Constants.REQUEST_HEADER).content
         x = json.loads(x[x.find('(') + 1 : x.find(')')])
 
         # 遍历相册进行下载
@@ -64,12 +64,12 @@ class AlbumHandler(object):
 
                 # 请求具体相册
                 photo = self.session.get(Constants.LIST_PHOTO
-                                        .replace('{g_tk}', str(self.g_tk))
-                                        .replace('{u_id}', u_id)
-                                        .replace('{topicId}', topicId)
-                                        .replace('{pageStart}', str(pageStart))
-                                        .replace('{pageNum}', str(pageNum)), 
-                                        headers=Constants.REQUEST_HEADER).content
+                                    .replace('{g_tk}', str(self.g_tk))
+                                    .replace('{u_id}', u_id)
+                                    .replace('{topicId}', topicId)
+                                    .replace('{pageStart}', str(pageStart))
+                                    .replace('{pageNum}', str(pageNum)), 
+                                    headers=Constants.REQUEST_HEADER).content
 
                 time.sleep(1)
                 photo = json.loads(photo[photo.find('(') + 1 : photo.find(')')])
@@ -106,17 +106,12 @@ class AlbumHandler(object):
             time.sleep(1)
             req = requests.get(url, headers=Constants.REQUEST_HEADER)
             
-            if req.status_code==200:
-                with open(imgPath, 'wb') as f:
-                    f.write(req.content)
-            else:
-                if times == 3:
-                    print 'redownloading failed, continue...'
-                    return
-                
-                times += 1
-                print 'try %d times, redownloading %s'%(times+1, url)
-                self.imgDownload(url, imgPath, times)
-        except Exception as e:
-            print e.message
-        
+            #urllib.urlretrieve(url, imgPath, self.downLoadProcess)
+        except Exception:
+            times += 1
+            if times == 3:
+                print 'redownloading failed, continue...'
+                return
+            
+            print 'try %d times download %s failed.Redownloading..'%(times, url)
+            self.imgDownload(url, imgPath, times)

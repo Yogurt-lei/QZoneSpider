@@ -19,8 +19,11 @@ APP_ID = "549000912"
 # GET 预登陆处理pt_login_sig参数
 # PREPARE_LOGIN = "https://xui.ptlogin2.qq.com/cgi-bin/xlogin?appid={app_id}&s_url=https://qzs.qzone.qq.com/qzone/v5/loginsucc.html?para=izone&from=iqq"
 
-# GET 扫码登录
-REFRESH_QRCODE = "https://ssl.ptlogin2.qq.com/ptqrlogin?aid={app_id}&pt_guid_sig={pt_guid_sig}&u1=https://qzs.qzone.qq.com/qzone/v5/loginsucc.html?para=izone&ptqrtoken=500593639&ptredirect=1&h=1&t=1&g=1&from_ui=1&ptlang=2052&action=4-6-1501073549024&js_ver=10226&js_type=1&pt_uistyle=40"
+# GET 获取二维码
+PT_QR_SHOW = "https://ssl.ptlogin2.qq.com/ptqrshow?appid={app_id}&e=2&l=M&s=3&d=72&v=4&daid=5&t={time}"
+
+# GET 二维码登录
+PT_QR_LOGIN = "https://ssl.ptlogin2.qq.com/ptqrlogin?aid={app_id}&ptqrtoken={ptqrtoken}&u1=https://qzs.qzone.qq.com/qzone/v5/loginsucc.html?para=izone&from_ui=1&pt_uistyle=40"
 
 # GET 是否需要验证码验证
 IS_NEED_VERIFY = "https://ssl.ptlogin2.qq.com/check?appid={app_id}&uin={u_id}&pt_tea=2&pt_vcode=1&u1=https://qzs.qzone.qq.com/qzone/v5/loginsucc.html?para=izone&from=iqq"
