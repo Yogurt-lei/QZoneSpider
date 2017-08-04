@@ -60,7 +60,7 @@ class AlbumHandler(object):
             while currPage <= page:
                 pageStart = (currPage-1) * PAGE_NUM
                 isLast = True if page==currPage else False
-                pageNum = pageStart + (remainder if isLast else PAGE_NUM)
+                pageNum = remainder if isLast else PAGE_NUM
 
                 # 请求具体相册
                 photo = self.session.get(Constants.LIST_PHOTO
