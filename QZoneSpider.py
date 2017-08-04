@@ -1,16 +1,18 @@
 # coding:utf-8
 
 import os
+import re
 import json
+import time
 import requests
 import Algorithm
 import Constants
 from PIL import Image
 from io import BytesIO
-from AlbumHandler import *
 
 SESSION = requests.session()
 VERIFY_CODE_IMG_PATH = os.path.split(os.path.realpath(__file__))[0] + os.sep + 'verifyCode.png'
+QR_CODE_IMG_PATH = os.path.split(os.path.realpath(__file__))[0] + os.sep + 'qrCode.png'
 
 class QZoneSpider(object):
     """
@@ -18,7 +20,6 @@ class QZoneSpider(object):
     """
 
     def __init__(self):
-
         self.pt_guid_sig = ''
         # 扫码登录签名
         self.pt_verifysession_v1 = ''
@@ -36,6 +37,57 @@ class QZoneSpider(object):
         self.tryLoginTimes = 0
         # 尝试登录次数
 
+
+    def qrLogin(self):
+        """
+            二维码登录流程
+        """
+        ptqrtoken = self.getQRCode()
+        while True:
+            time.sleep(3)
+            
+            resp = SESSION.get(Constants.PT_QR_LOGIN
+                            .replace('{app_id}', Constants.APP_ID)
+                            .replace('{ptqrtoken}', str(ptqrtoken)), 
+                            headers=Constants.REQUEST_HEADER).content
+
+            res = re.search(r'ptuiCB(\(.*\))\;', resp).group(1)
+            res = eval(res)
+            print res
+
+            code = res[0]
+            if code=='0':
+                # 扫码成功请求回传重定向地址
+                url = res[2]
+                print url
+                os.remove(QR_CODE_IMG_PATH)
+                SESSION.get(url, headers=Constants.REQUEST_HEADER)
+                g_tk = Algorithm.g_tk(SESSION.cookies['p_skey'])
+
+                AlbumHandler(SESSION, g_tk).start(SESSION.cookies['uin'].lstrip('o'))
+            elif code == '65':
+                print 'refresh QR-Code'
+                os.remove(QR_CODE_IMG_PATH)
+                ptqrtoken = self.getQRCode()
+            elif code == '67':
+                print 'confirm login in mobile!'
+
+    def getQRCode(self):
+        '''
+            取二维码
+        '''
+        qrImg = SESSION.get(Constants.PT_QR_SHOW
+                            .replace('{app_id}', Constants.APP_ID)
+                            .replace('{time}', str(time.time())), 
+                            headers=Constants.REQUEST_HEADER).content
+
+        im = Image.open(BytesIO(qrImg))
+        im.save(QR_CODE_IMG_PATH)
+        im.show()
+        ptqrtoken = Algorithm.ptqrtoken(SESSION.cookies['qrsig'])
+
+        return ptqrtoken
+
     def login(self, u_id, pwd):
         """
             登录流程 
@@ -44,8 +96,7 @@ class QZoneSpider(object):
         self.tryLoginProcess(u_id, pwd)
         # print SESSION.cookies
         g_tk = Algorithm.g_tk(SESSION.cookies['p_skey'])
-
-        # 开始处理相册
+        
         AlbumHandler(SESSION, g_tk).start(u_id)
         
     def tryLoginProcess(self, u_id, pwd):
@@ -87,15 +138,13 @@ class QZoneSpider(object):
         errorCode = self.isRightVerifyCode(u_id, cdata)
         if errorCode == '0': # 验证码输入正确 真实登录
             self.realLogin(u_id, pwd)
-        else:
-            if errorCode == '16': # 重新登录
-                self.retryLogin()
-            else:
-                if errorCode == '50': # 刷新验证码
-                    print 'Refresh nVerifyCode Image'
-                    self.tryVerifyCodeProcess(u_id, pwd)
-                else: # 未知错误代码 , 可以当做16 重新处理登录
-                    self.retryLogin()
+        elif errorCode == '16': # 重新登录
+            self.retryLogin()
+        elif errorCode == '50': # 刷新验证码
+            print 'Refresh nVerifyCode Image'
+            self.tryVerifyCodeProcess(u_id, pwd)
+        else: # 未知错误代码 , 可以当做16 重新处理登录
+            self.retryLogin()
 
     def retryLogin(self):
         '''
@@ -276,4 +325,3 @@ class QZoneSpider(object):
             self.pt_verifysession_v1 = resp['ticket']
         
         return errorCode
-

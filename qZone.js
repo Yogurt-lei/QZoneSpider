@@ -1158,3 +1158,9 @@ function g_tk(p_skey) {
     return hash & 0x7fffffff; 
 }
 
+function ptqrtoken(qrsig) {
+    for (var e = 0,i = 0,n = qrsig.length; n > i; ++i) 
+        e += (e << 5) + qrsig.charCodeAt(i);
+    
+    return e & 0x7fffffff; 
+}

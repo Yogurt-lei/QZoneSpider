@@ -30,3 +30,9 @@ def g_tk(p_skey):
         登录成功后续的GTK算法
     '''
     return js.locals.g_tk(p_skey)
+
+def ptqrtoken(qrsig):
+    '''
+        二维码登录token算法
+    '''
+    return js.locals.ptqrtoken(qrsig)
