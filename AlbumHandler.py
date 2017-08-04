@@ -4,7 +4,6 @@ import os
 import json
 import time
 import urllib
-import requests
 import Constants
 
 PAGE_NUM = 30
@@ -89,24 +88,16 @@ class AlbumHandler(object):
 
             print '-----------album %s end download----------------------'%(topicId)
     
-    def downLoadProcess(self, blocknum, blocksize, totalsize):
-        '''
-            下载进度 urllib.urlretrieve使用
-        '''
-        percent = 100.0 * blocknum * blocksize / totalsize
-        if percent > 100:
-            percent = 100
-        print "%.2f%%"% percent
-
     def imgDownload(self, url, imgPath, times):
         '''
             下载图片：异常重新下载
         '''
         try:
-            time.sleep(1)
-            req = requests.get(url, headers=Constants.REQUEST_HEADER)
+            data = urllib.urlopen(url).read()
+
+            with open(imgPath, 'wb') as f:
+                f.write(data)
             
-            #urllib.urlretrieve(url, imgPath, self.downLoadProcess)
         except Exception:
             times += 1
             if times == 3:
