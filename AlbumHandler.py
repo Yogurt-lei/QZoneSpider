@@ -93,6 +93,7 @@ class AlbumHandler(object):
             下载图片：异常重新下载
         '''
         try:
+            #TODO 下载丢失，捕获不到异常，怎么回事
             resp = requests.get(url, headers=Constants.REQUEST_HEADER)
             times += 1
             time.sleep(1)

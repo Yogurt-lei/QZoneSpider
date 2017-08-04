@@ -65,7 +65,7 @@ class QZoneSpider(object):
                 SESSION.get(url, headers=Constants.REQUEST_HEADER)
                 g_tk = Algorithm.g_tk(SESSION.cookies['p_skey'])
 
-                # AlbumHandler(SESSION, g_tk).start(SESSION.cookies['uin'].lstrip('o'))
+                AlbumHandler(SESSION, g_tk).start(SESSION.cookies['uin'].lstrip('o'))
             elif code == '65':
                 print 'refresh QR-Code'
                 os.remove(QR_CODE_IMG_PATH)
