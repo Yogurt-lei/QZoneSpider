@@ -7,16 +7,18 @@ import requests
 import Constants
 
 PAGE_NUM = 30
+IMG_DOWNLOAD_PATH = os.path.split(os.path.realpath(__file__))[0] + os.sep + 'downloadImgs'
+DOWNLOAD_FAILED_IMG_PATH = IMG_DOWNLOAD_PATH + os.sep + 'downloadFailedImg.txt'
 
 class AlbumHandler(object):
     '''
         相册处理
     '''
-    IMG_DOWNLOAD_PATH = os.path.split(os.path.realpath(__file__))[0] + os.sep + 'downloadImgs'
-
     def __init__(self, session, g_tk):
-        if not os.path.exists(self.IMG_DOWNLOAD_PATH):
-            os.mkdir(self.IMG_DOWNLOAD_PATH)
+        if not os.path.exists(IMG_DOWNLOAD_PATH):
+            os.mkdir(IMG_DOWNLOAD_PATH)
+        if os.path.exists(DOWNLOAD_FAILED_IMG_PATH):
+            os.remove(DOWNLOAD_FAILED_IMG_PATH)
 
         self.session = session    
         self.g_tk = g_tk
@@ -26,7 +28,7 @@ class AlbumHandler(object):
             分页下载相册图片
         '''
         # 创建用户u_id下载图片文件夹
-        uidImgPath = self.IMG_DOWNLOAD_PATH + os.sep + u_id
+        uidImgPath = IMG_DOWNLOAD_PATH + os.sep + u_id
         if not os.path.exists(uidImgPath):
             os.mkdir(uidImgPath)
 
@@ -78,8 +80,8 @@ class AlbumHandler(object):
                     imgPath = albumPath + os.sep + str(pid) + '.jpg'
 
                     if not os.path.exists(imgPath):
-                        print '[%s/%s page]: [%s / %s] downloading: %s'%(currPage, page, currPhoto, total, purl) 
-                        self.imgDownload(purl, imgPath, 0)
+                        if self.imgDownload(purl, imgPath, 0):
+                            print '[%s/%s page]: [%s / %s] downloaded: %s'%(currPage, page, currPhoto, total, purl) 
                     else:
                         print 'photo %s exists, continue.' %(pid)
                     currPhoto += 1
@@ -96,16 +98,22 @@ class AlbumHandler(object):
             #TODO 下载丢失，捕获不到异常，怎么回事
             resp = requests.get(url, headers=Constants.REQUEST_HEADER)
             times += 1
-            time.sleep(1)
+            time.sleep(2)
             if resp.status_code==200:
+                if len(resp.content)<20000:
+                    print resp.content
                 with open(imgPath, 'wb') as f:
                     f.write(resp.content)
+                return True
             else:
                 resp.raise_for_status()
         except Exception as e:
             if times == 3:
-                print '%s, redownloading failed, giving up...'%(e.message)
-                return
+                print '%s redownloading failed, giving up...'%(e.message)
+                with open(DOWNLOAD_FAILED_IMG_PATH, 'a') as f:
+                    f.writelines(url+"\n")
+
+                return False
             
             print 'try %d times download %s failed.Redownloading..'%(times, url)
             self.imgDownload(url, imgPath, times)
