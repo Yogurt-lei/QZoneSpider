@@ -5,7 +5,7 @@ import re
 import json
 import time
 import requests
-import Algorithm
+from Algorithm import *
 import Constants
 from PIL import Image
 from io import BytesIO
