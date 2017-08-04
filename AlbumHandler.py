@@ -93,15 +93,14 @@ class AlbumHandler(object):
             下载图片：异常重新下载
         '''
         try:
-            times += 1
             resp = requests.get(url, headers=Constants.REQUEST_HEADER)
+            times += 1
+            time.sleep(1)
             if resp.status_code==200:
                 with open(imgPath, 'wb') as f:
                     f.write(resp.content)
             else:
-                print 'server Code %s, redownloading failed, giving up...'%(resp.status_code)
-                self.imgDownload(url, imgPath, times)
-            
+                resp.raise_for_status()
         except Exception as e:
             if times == 3:
                 print '%s, redownloading failed, giving up...'%(e.message)
